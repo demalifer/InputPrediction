@@ -1,6 +1,9 @@
 import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
+from watchdog.utils import BaseThread
+
+from config import *
 
 class InputMethodDataset(Dataset):
     def __init__(self, path):
@@ -15,9 +18,9 @@ class InputMethodDataset(Dataset):
         return input, target
 
 def get_dataloader(train=True):
-    path = '../data/processed/' + ('train.jsonl' if train else 'test.jsonl')
+    path = PROCESSED_DATA_DIR / ('train.jsonl' if train else 'test.jsonl')
     dataset = InputMethodDataset(path)
-    dataloader = DataLoader(dataset, batch_size=64, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
     return dataloader
 
 if __name__ == '__main__':

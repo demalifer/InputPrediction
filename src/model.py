@@ -1,12 +1,14 @@
 import torch
 import torch.nn as nn
 
+from config import *
+
 class InputMethodModel(nn.Module):
     def __init__(self, vocab_size):
         super(InputMethodModel, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embedding_dim=128)
-        self.rnn = nn.RNN(input_size=128, hidden_size=256, batch_first=True)
-        self.linear = nn.Linear(in_features=256, out_features=vocab_size)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim=EMBEDDING_SIZE)
+        self.rnn = nn.RNN(input_size=EMBEDDING_SIZE, hidden_size=HIDDEN_SIZE, batch_first=True)
+        self.linear = nn.Linear(in_features=HIDDEN_SIZE, out_features=vocab_size)
 
     def forward(self, input):
         embed = self.embedding(input)
