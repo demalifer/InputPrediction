@@ -10,7 +10,18 @@ def predict_topk(model, input, k=5):
     top_indices = torch.topk(output, k=k).indices
     return top_indices.tolist()
 
-def predict(text):
+def predict(text, model, id2word, word2id, k, device):
+
+    tokens = jieba.lcut(text)
+    ids = [word2id.get(token, word2id.get(UNK_TOKEN)) for token in tokens]
+    input = torch.tensor([ids], dtype=torch.long).to(device)
+
+    top_indices_list = predict_topk(model, input, k=k)
+    top_tokens = [id2word[id] for id in top_indices_list[0]]
+
+    return top_tokens
+
+def run_predict():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     with open(MODEL_DIR/VOCAB_FILE, 'r', encoding='utf-8') as f:
         vocab_list = [token.strip() for token in f.readlines()]
@@ -22,17 +33,20 @@ def predict(text):
     model.load_state_dict(torch.load(MODEL_DIR / BEST_MODEL))
     print('model load success!')
 
-    tokens = jieba.lcut(text)
-    ids = [word2id.get(token, word2id.get(UNK_TOKEN)) for token in tokens]
-    input = torch.tensor([ids], dtype=torch.long).to(device)
+    print('Welcome to INTELEGER input method! print q or quit to exit...')
+    input_history = ''
+    while True:
+        user_input = input('> ')
+        if user_input.strip() in ['q', 'quit']:
+            print('bye!')
+            break
+        elif user_input.strip() == '':
+            print('please input valid content!')
+            continue
 
-    top_indices_list = predict_topk(model, input)
-    top_tokens = [id2word[id] for id in top_indices_list[0]]
-
-    return top_tokens
-
+        input_history += user_input
+        top_tokens = predict(input_history, model, id2word, word2id, 5, device)
+        print('top tokens:', top_tokens)
 
 if __name__ == '__main__':
-    text = '我们'
-    top5_tokens = predict(text)
-    print(top5_tokens)
+    run_predict()
