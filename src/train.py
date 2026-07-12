@@ -8,6 +8,7 @@ from model import InputMethodModel
 
 from torch.utils.tensorboard import SummaryWriter
 import time
+from tokenizer import JiebaTokenizer
 
 def train_one_epoch(model, train_loader, loss , optimizer, device):
     model.train()
@@ -28,9 +29,10 @@ def train_one_epoch(model, train_loader, loss , optimizer, device):
 def train():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     train_loader = get_dataloader(train=True)
-    with open(MODEL_DIR/VOCAB_FILE, 'r', encoding='utf-8') as f:
-        vocab_list = [token.strip() for token in f.readlines()]
-    model = InputMethodModel(vocab_size=len(vocab_list)).to(device)
+
+    tokenizer = JiebaTokenizer.from_vocab(MODEL_DIR/VOCAB_FILE)
+
+    model = InputMethodModel(vocab_size=tokenizer.vocab_size).to(device)
     loss = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 

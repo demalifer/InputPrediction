@@ -3,10 +3,11 @@ import jieba
 from sklearn.model_selection import train_test_split
 
 from config import *
+from tokenizer import JiebaTokenizer
 
-def build_dataset(sentences, word2id):
+def build_dataset(sentences, tokenizer):
     dataset = []
-    sentences_id = [[word2id.get(token, 0) for token in jieba.lcut(sentence)] for sentence in sentences ]
+    sentences_id = [tokenizer.encode(sentence) for sentence in sentences ]
     for sentence_id_list in sentences_id:
         for i in range(len(sentence_id_list) - SEQ_LEN):
             input = sentence_id_list[i:i + SEQ_LEN]
@@ -27,19 +28,11 @@ def preprocess():
 
     train_sentences, test_sentences = train_test_split(sentences, test_size=0.2, random_state=42)
 
-    vocab_set = set()
-    for sentence in train_sentences:
-        vocab_set.update(jieba.lcut(sentence))
-    vocab_list = [UNK_TOKEN] + list(vocab_set)
-    word2id = {word : id for id, word in enumerate(vocab_list)}
+    JiebaTokenizer.build_vocab(train_sentences, MODEL_DIR/VOCAB_FILE)
+    tokenizer = JiebaTokenizer.from_vocab(MODEL_DIR/VOCAB_FILE)
 
-    print('The size of vocabulary:', len(vocab_list))
-
-    with open(MODEL_DIR/VOCAB_FILE, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(vocab_list))
-
-    train_dataset = build_dataset(train_sentences, word2id)
-    test_dataset = build_dataset(test_sentences, word2id)
+    train_dataset = build_dataset(train_sentences, tokenizer)
+    test_dataset = build_dataset(test_sentences, tokenizer)
 
     pd.DataFrame(train_dataset).to_json(PROCESSED_DATA_DIR/TRAIN_DATA_FILE, orient='records', lines=True)
     pd.DataFrame(test_dataset).to_json(PROCESSED_DATA_DIR/TEST_DATA_FILE, orient='records', lines=True)

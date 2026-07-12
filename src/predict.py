@@ -2,6 +2,7 @@ import torch
 import jieba
 from config import *
 from model import InputMethodModel
+from tokenizer import JiebaTokenizer
 
 def predict_topk(model, input, k=5):
     model.eval()
@@ -10,26 +11,23 @@ def predict_topk(model, input, k=5):
     top_indices = torch.topk(output, k=k).indices
     return top_indices.tolist()
 
-def predict(text, model, id2word, word2id, k, device):
+def predict(text, model, tokenizer, k, device):
 
-    tokens = jieba.lcut(text)
-    ids = [word2id.get(token, word2id.get(UNK_TOKEN)) for token in tokens]
+    ids = tokenizer.encode(text)
+
     input = torch.tensor([ids], dtype=torch.long).to(device)
 
     top_indices_list = predict_topk(model, input, k=k)
-    top_tokens = [id2word[id] for id in top_indices_list[0]]
+    top_tokens = [tokenizer.id2word[id] for id in top_indices_list[0]]
 
     return top_tokens
 
 def run_predict():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    with open(MODEL_DIR/VOCAB_FILE, 'r', encoding='utf-8') as f:
-        vocab_list = [token.strip() for token in f.readlines()]
-    id2word = {id: word for id, word in enumerate(vocab_list)}
-    word2id = {word: id for id, word in enumerate(vocab_list)}
+    tokenizer = JiebaTokenizer.from_vocab(MODEL_DIR/VOCAB_FILE)
     print('vocabulary load success!')
 
-    model = InputMethodModel(vocab_size=len(vocab_list)).to(device)
+    model = InputMethodModel(vocab_size=tokenizer.vocab_size).to(device)
     model.load_state_dict(torch.load(MODEL_DIR / BEST_MODEL))
     print('model load success!')
 
@@ -45,7 +43,7 @@ def run_predict():
             continue
 
         input_history += user_input
-        top_tokens = predict(input_history, model, id2word, word2id, 5, device)
+        top_tokens = predict(input_history, model, tokenizer, 5, device)
         print('top tokens:', top_tokens)
 
 if __name__ == '__main__':

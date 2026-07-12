@@ -3,6 +3,8 @@ from config import *
 from model import InputMethodModel
 from dataset import get_dataloader
 from predict import predict_topk
+from tokenizer import JiebaTokenizer
+from tqdm import tqdm
 
 def evaluate(model, dataloader, device):
     top1_acc_count, top5_acc_count = 0, 0
@@ -10,7 +12,7 @@ def evaluate(model, dataloader, device):
 
     model.eval()
     with torch.no_grad():
-        for inputs, targets in dataloader:
+        for inputs, targets in tqdm(dataloader, desc='Evaluating: '):
             inputs, targets = inputs.to(device), targets.to(device)
             top5_indices_list = predict_topk(model, inputs)
             for target, top5_indices in zip(targets, top5_indices_list):
@@ -25,10 +27,10 @@ def evaluate(model, dataloader, device):
 
 def run_evaluate():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    with open(MODEL_DIR/VOCAB_FILE, 'r', encoding='utf-8') as f:
-        vocab_list = [token.strip() for token in f.readlines()]
+    tokenizer = JiebaTokenizer.from_vocab(MODEL_DIR/VOCAB_FILE)
+    print('vocabulary load success!')
 
-    model = InputMethodModel(vocab_size=len(vocab_list)).to(device)
+    model = InputMethodModel(vocab_size=tokenizer.vocab_size).to(device)
     model.load_state_dict(torch.load(MODEL_DIR / BEST_MODEL))
     print('model load success!')
 
