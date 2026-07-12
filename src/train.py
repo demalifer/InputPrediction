@@ -1,11 +1,13 @@
 import torch
-from numba.cuda.printimpl import print_item
 from torch import nn, optim
 from tqdm import tqdm
 
 from config import *
 from dataset import get_dataloader
 from model import InputMethodModel
+
+from torch.utils.tensorboard import SummaryWriter
+import time
 
 def train_one_epoch(model, train_loader, loss , optimizer, device):
     model.train()
@@ -32,16 +34,23 @@ def train():
     loss = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
+    writer = SummaryWriter(log_dir=LOG_DIR / time.strftime('%Y-%m-%d_%H-%M-%S'))
+
     min_loss = float('inf')
     for epoch in range(EPOCHS):
         print('='*15, f'EPOCH {epoch+1}', '='*15)
         this_loss = train_one_epoch(model, train_loader, loss, optimizer, device)
         print('the loss of this epoch is : ', this_loss)
 
+        writer.add_scalar('loss', this_loss, epoch + 1)
+
         if this_loss < min_loss:
             min_loss = this_loss
             torch.save(model.state_dict(), MODEL_DIR / BEST_MODEL)
-            print('the best model has been saved!')
+            print('The best model has been saved!')
+        else:
+            print('This model is not the best, and it has not been saved!')
+    writer.close()
 
 if __name__ == '__main__':
     train()

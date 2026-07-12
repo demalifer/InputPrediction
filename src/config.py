@@ -6,6 +6,7 @@ RAW_DATA_DIR = ROOT_DIR / 'data' / 'raw'
 PROCESSED_DATA_DIR = ROOT_DIR / 'data' / 'processed'
 
 MODEL_DIR = ROOT_DIR / 'models'
+LOG_DIR = ROOT_DIR / 'logs'
 
 RAW_DATA_FILE = 'synthesized_.jsonl'
 TRAIN_DATA_FILE = 'train.jsonl'
@@ -21,4 +22,4 @@ EMBEDDING_SIZE = 128
 HIDDEN_SIZE = 256
 
 LEARNING_RATE = 0.001
-EPOCHS = 30
+EPOCHS = 50
